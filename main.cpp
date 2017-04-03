@@ -16,7 +16,7 @@ void mol_selection (int& type_mol_1, int& type_mol_2, int& apm_mol_1, int& apm_m
             M1.push_back(15.034);
             M1.push_back(15.999);
             M1.push_back(1.008);
-            totM1 = M[0] + M[1] + M[2];
+            totM1 = M1[0] + M1[1] + M1[2];
         }
         else if (type_mol_1 == 3) // Type "CO2"
         {
@@ -103,7 +103,7 @@ double separation(double& val1, double& val2, float& boxlength)
     return DR;
 }
 
-int distance(double& dx, double& dy, double& dz, double& dr)
+int distance(double& dx, double& dy, double& dz, float& dr)
 {
     double r = 0;
     int r_bin = 0;
@@ -114,18 +114,18 @@ int distance(double& dx, double& dy, double& dz, double& dr)
 
 int main(int argc, char *argv[])
 {
-    int starttime = 0; endtime = 0, dumpfreq = 0, n_bin = 0, ntop = 0, nbeh = 0, n_mol_1 = 0, n_mol_2 = 0, type_mol_1 = 0; type_mol_2 = 0, selection_1 = 0, selection_2 = 0, pbc_unwrap_flag = 0; // Parameter File integers
-    int apm_mol_1 =0, apm_mol_2 = 0, t_start = 0, t_end = 0, tot_time = 0, bin_time = 0, tot_r = 0, n_ref_mol = 0, n_sel_mol = 0;
+    int starttime = 0, endtime = 0, dumpfreq = 0, n_bin = 0, ntop = 0, nbeh = 0, n_mol_1 = 0, n_mol_2 = 0, type_mol_1 = 0, type_mol_2 = 0, selection_1 = 0, selection_2 = 0, pbcwrapflag = 0; // Parameter File integers
+    int apm_mol_1 =0, apm_mol_2 = 0, t_start = 0, t_end = 0, tot_time = 0, bin_time = 0, tot_r = 0, n_ref_mol = 0, n_sel_mol = 0, natoms = 0;
     float boxlength = 0.0, dr = 0.0, r_end = 0.0; // Parameter File Floats
     double totM1 = 0.0, totM2 = 0.0;
     double dx = 0.0, dy = 0.0, dz = 0.0;
-    vector<double> X, Y, Z, M1, M2, g_r;
+    vector<double> ID, X, Y, Z, M1, M2;
     string bufferstring = "tmp", filename = "file.dat", delim = "tmp_"; // Parameter file strings
 
     if ( argc < 2 )
     {
         // argc should be 2 for correct execution
-        cout<<"usage: "<< argv[0] <<" <filename>\n";
+        cout<<"Proper Usage: "<< argv[0] <<" [filename]\n";
     }
     else 
     {
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
         param_file >> selection_1 >> selection_2;
         getline(param_file, bufferstring);
         getline(param_file, bufferstring);
-        param_file >> pbc_unwrap_flag;
+        param_file >> pbcwrapflag;
         
         // Handles Molecular Identity
         mol_selection(type_mol_1, type_mol_2, apm_mol_1, apm_mol_2, M1, M2, totM1, totM2);
@@ -167,6 +167,7 @@ int main(int argc, char *argv[])
         tot_time = t_end - t_start;
         bin_time = tot_time / n_bin;
         tot_r = r_end/dr;
+        natoms = n_mol_1*apm_mol_1 + n_mol_2*apm_mol_2;
 
         // Open the File
         ifstream input_file ( argv[1] );
@@ -175,7 +176,7 @@ int main(int argc, char *argv[])
             cerr << "Error: Trajectory File Open Failed." << endl;
         }
 
-
+        int index=0;
         for (int t = 0; t < t_end; t++)
         {
             if (ntop != 0)
@@ -191,7 +192,7 @@ int main(int argc, char *argv[])
                 X.push_back(0);
                 Y.push_back(0);
                 Z.push_back(0);
-                input >> ID[index] >> X[index] >> Y[index] >> Z[index];
+                input_file >> ID[index] >> X[index] >> Y[index] >> Z[index];
                 if ( pbcwrapflag == 1 && t != 0 )
                 {
                     pbc_unwrap(boxlength, X[index], X[index-natoms]);
@@ -200,12 +201,12 @@ int main(int argc, char *argv[])
                 }
                 index++;
             }
-            getline(input, bufferstring);
+            getline(input_file, bufferstring);
             if (nbeh != 0)
             {
                 for (int m = 0; m < nbeh; m++)
                 {
-                    getline(input, bufferstring);
+                    getline(input_file, bufferstring);
                 }
             }
         }
@@ -230,8 +231,8 @@ int main(int argc, char *argv[])
                         int j = 0;
                         while (j < i)
                         {
-                            int atom1 = i*apm_mol_1+(selection_1-1);
-                            int atom2 = j*apm_mol_1+(selection_2-1);
+                            int atom1 = i*apm_mol_1+(selection_1-1)+t*natoms;
+                            int atom2 = j*apm_mol_1+(selection_2-1)+t*natoms;
                             dx=separation(X[atom1],X[atom2],boxlength);
                             dy=separation(Y[atom1],Y[atom2],boxlength);
                             dz=separation(Z[atom1],Z[atom2],boxlength);
@@ -250,8 +251,8 @@ int main(int argc, char *argv[])
                     {      
                         for (int j = 0; j < n_mol_2; j++)
                         {
-                            int atom1 = i*apm_mol_1 + (selection_1-1);
-                            int atom2 = j*apm_mol_2 + (selection_2 - apm_mol_1 - 1);
+                            int atom1 = i*apm_mol_1 + (selection_1-1)+t*natoms;
+                            int atom2 = j*apm_mol_2 + (selection_2 - apm_mol_1 - 1)+t*natoms;
                             dx=separation(X[atom1],X[atom2],boxlength);
                             dy=separation(Y[atom1],Y[atom2],boxlength);
                             dz=separation(Z[atom1],Z[atom2],boxlength);
@@ -269,8 +270,8 @@ int main(int argc, char *argv[])
                     {
                         for (int j = 0; j < n_mol_2; j++)
                         {
-                            int atom1 = i*apm_mol_2 + (selection_1-apm_mol_1-1);
-                            int atom2 = j*apm_mol_2 + (selection_2 - apm_mol_1 - 1);
+                            int atom1 = i*apm_mol_2 + (selection_1-apm_mol_1-1)+t*natoms;
+                            int atom2 = j*apm_mol_2 + (selection_2 - apm_mol_1 - 1)+t*natoms;
                             dx=separation(X[atom1],X[atom2],boxlength);
                             dy=separation(Y[atom1],Y[atom2],boxlength);
                             dz=separation(Z[atom1],Z[atom2],boxlength);
@@ -286,18 +287,19 @@ int main(int argc, char *argv[])
                 }
                 for (int r = 0; r < tot_r; r++)
                 {
-                    GofR[r] += (rdf[r]/((double) n_ref_mol))*(1/(4*PI*pow(r*dr,2)*dr))*(pow(boxlength,3)/((double) n_sel_mol));
+                    GofR[r] += (rdf[r]/((double) n_ref_mol))*(1/(4*M_PI*pow(r*dr,2)*dr))*(pow(boxlength,3)/((double) n_sel_mol));
                 }
             }
+            string gofr_out_fname = "gofr_" + delim + "_bin_" + to_string(b) + ".dat";
+            ofstream gofrout;
+            gofrout.open(gofr_out_fname);
+            for (int r = 0; r < tot_r; r++)
+            {
+                GofR[r] = GofR[r]/((double) bin_time);
+                gofrout << ((float) (r*dr+0.5*dr)) << GofR[r] << endl;
+            } 
         }
-        string gofr_out_fname = "gofr_" + delim + "_bin_" + to_string(b) + ".dat";
-        ofstream gofrout;
-        gofrout.open(gofr_out_fname);
-        for (int r = 0; r < tot_r; r++)
-        {
-            GofR[r] = GofR[r]/((double) bin_time);
-            gofrout << ((float) (r*dr+0.5*dr)) << GofR[r] << endl;
-        }
+        
     }
     return 0;
 }

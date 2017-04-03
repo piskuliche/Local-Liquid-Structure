@@ -1,4 +1,5 @@
 #pragma once
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <fstream>  //file stream
 #include <ctime>    //system time
