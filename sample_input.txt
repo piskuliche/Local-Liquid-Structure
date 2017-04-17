@@ -12,5 +12,5 @@ n_mol_2         type_mol_2
 15              3
 selection_1     selection_2
 2               2
-pbc_unwrap_flag
-1
+pbc_unwrap_flag temperature
+1               373.15
