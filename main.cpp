@@ -80,31 +80,6 @@ void mol_selection (int& type_mol_1, int& type_mol_2, int& apm_mol_1, int& apm_m
         }
 }
 
-/*
-double pbc_unwrap(float& boxlength, double& coord, double& prevcoord)
-//This subroutine takes care of all of the unwrapping.
-{
-    double stepdiff = coord - prevcoord;
-    double halfbox = boxlength / 2.0;
-    while ( abs(stepdiff) >= halfbox )
-    {
-        if ( stepdiff > halfbox)
-        {
-            coord = coord - boxlength;     
-        }
-        else if ( stepdiff < -halfbox )
-        {
-            coord = coord + boxlength; 
-        }
-        else
-        {
-            // Do Nothing
-        }
-    stepdiff = coord - prevcoord;
-    }
-}
-*/
-
 double separation(double& val1, double& val2, float& boxlength)
 //This calculates the difference between two values, and then modifies based on periodic boundaries. 
 {
